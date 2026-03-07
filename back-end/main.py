@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-x = GetProcesses.process_dict
+x = get_processes.process_dict
 
 
 
