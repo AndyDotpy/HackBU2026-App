@@ -8,10 +8,9 @@ x = GetProcesses.process_dict
 
 
 
-@app.get("/hello")
+@app.get("/processes")
 def get_processes():
     processes = []
-    return {"message": x,
-            }
+    return {"message": x}
 
 
