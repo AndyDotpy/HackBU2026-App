@@ -1,4 +1,4 @@
-import GetProcesses
+import get_processes
 from fastapi import FastAPI
 
 
