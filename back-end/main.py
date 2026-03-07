@@ -1,6 +1,17 @@
-def main() -> None:
-    pass
+import GetProcesses
+from fastapi import FastAPI
 
-if __name__ == '__main__':
-    main()
+
+app = FastAPI()
+
+x = GetProcesses.process_dict
+
+
+
+@app.get("/hello")
+def get_processes():
+    processes = []
+    return {"message": x,
+            }
+
 
