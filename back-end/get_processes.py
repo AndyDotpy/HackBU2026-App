@@ -12,10 +12,9 @@ def get_process_dict():
             #uptime takes max of the two, in case uptime rounds down to 0
             uptime = max(current_time - proc_dict['create_time'], 0.001)
 
-            # get bytes per second, used in severity_score()
-            io = proc.io_counters()
-
             try:
+                # get bytes per second, used in severity_score()
+                io = proc.io_counters()
                 bytes_per_second = (io.read_bytes + io.write_bytes) / uptime
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired, psutil.Error, ZeroDivisionError):
                 bytes_per_second = 0
