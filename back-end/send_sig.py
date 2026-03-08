@@ -17,7 +17,8 @@ def end_process(pid, sig):
     else:
         return True
 '''
-Either kills or terminates a process given a process ID and signal
+Description:
+    Either kills or terminates a process given a process ID and signal
 Args:
     pid (int): the process ID
     sig (string): the signal
