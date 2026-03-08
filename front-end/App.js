@@ -43,7 +43,7 @@ function HomeScreen({navigation}) {
 
     const fetchProcess = async () => {
         try{
-            const response = await fetch("http://172.20.10.3:8000/processes");
+            const response = await fetch("http://149.125.163.99:8000/processes");
             const data = await response.json();
             const processArray = Object.entries(data.message).map(([pid, proc]) => new Process(
                 proc.name,
