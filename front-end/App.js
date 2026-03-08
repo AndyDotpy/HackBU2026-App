@@ -32,16 +32,7 @@ const secondaryLine = (process, currentSort) => {
 function HomeScreen({navigation}) {
     const [dropDownOpen, setDropDownOpen] = useState(false);
     const [drownDownValue, setDrownDownValue] = useState("PID");
-  const [processList, setProcessList] = useState([
-        new Process("Proc1", 1, 4902934, 234, 20, 1),
-        new Process("Proc2", 2, 49034, 23434, 30, 2),
-        new Process("Proc3", 3, 4034, 23, 20, 5),
-        new Process("Proc4", 4, 436, 232, 5, 2),
-        new Process("Proc5", 5, 4336, 123, 2, 5),
-        new Process("Proc6", 6, 4363546753546786867354, 4000, 4, 9,3),
-        new Process("EpicProc", 7, 8343, 290, 10, 1,2),
-        new Process("EpicProc2", 8, 2389, 3010, 2, 18.2),
-  ])
+  const [processList, setProcessList] = useState([])
     const [totalCPUUsage, setTotalCPUUsage] = useState(0.0);
     const [numProcesses, setNumProcesses] = useState(0);
     const [totalBytes, setTotalBytes] = useState(0);
@@ -52,13 +43,12 @@ function HomeScreen({navigation}) {
 
     const fetchProcess = async () => {
         try{
-            const response = await fetch("http://149.125.108.134:8000/processes");
+            const response = await fetch("http://172.20.10.3:8000/processes");
             const data = await response.json();
-            console.log(data.message);
             const processArray = Object.entries(data.message).map(([pid, proc]) => new Process(
                 proc.name,
                 proc.pid,
-                proc.memory_info,
+                proc.physical_mem,
                 proc.uptime,
                 proc.cpu_percent,
                 proc.severity,
@@ -194,10 +184,10 @@ function HomeScreen({navigation}) {
         <View style={{height: '1%'}}></View>
         <View style={{height: '.4%', backgroundColor: "darkgreen"}}></View>
         <View style={{height: '1%'}}></View>
-      <FlatList
+        <FlatList
           data={processList}
           renderItem={({item}) => <ProcessDisplay process={item} navigation={navigation} currentSort={drownDownValue}/>}
-          keyExtractor={process => String(process.uniqueId)}
+              keyExtractor={process => String(process.uniqueId)}
           horizontal={false}
       />
         <View style={{height: '1%'}}></View>

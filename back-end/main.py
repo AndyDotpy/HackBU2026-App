@@ -1,5 +1,7 @@
 import get_processes
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+import send_sig
+import psutil
 import time
 
 
@@ -13,14 +15,14 @@ def read_processes():
     return {"message": x}
 
 
-#class Message(BaseModel):
-#    text: str
+@app.post("/kill/{pid}")
+def kill_process(pid: int):
+    try:
+        send_sig.send_signal(pid, "SIGTERM")
+        return {"status": "success", "pid": pid}
 
-#@app.post("/send")
-#def get_request(msg: str):
-    #print("Recieved _" + "_ from frontend")
+    except psutil.NoSuchProcess:
+        raise HTTPException(status_code=404, detail="Process not found")
 
-    #return{
-        #"status": "Received!!",
-        #"Received": msg.text,
-    #}
+    except psutil.AccessDenied:
+        raise HTTPException(status_code=403, detail="Permission denied")

@@ -12,14 +12,21 @@ def get_process_dict():
             #uptime takes max of the two, in case uptime rounds down to 0
             uptime = max(current_time - proc_dict['create_time'], 0.001)
 
+            physical_mem = proc.memory_info().rss
+            proc_dict['physical_mem'] = physical_mem
+
             try:
                 # get bytes per second, used in severity_score()
                 io = proc.io_counters()
                 bytes_per_second = (io.read_bytes + io.write_bytes) / uptime
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired, psutil.Error, ZeroDivisionError):
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired, psutil.Error, ZeroDivisionError, AttributeError):
                 bytes_per_second = 0
 
-            severity = severity_score(proc_dict['cpu_percent'], proc_dict['memory_percent'], bytes_per_second)
+            cpu = proc_dict['cpu_percent'] or 0
+            memory = proc_dict['memory_percent'] or 0
+
+
+            severity = severity_score(cpu, memory, bytes_per_second)
 
             # add uptime and severity, then add to dictionary
             proc_dict['uptime'] = uptime

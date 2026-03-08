@@ -29,6 +29,20 @@ export const ProcessDetails = ({route, navigation}) => {
         setCurrClosePID(nextClosePID)
     }
 
+    const killProcess = async (pid) => {
+        try {
+            const response = await fetch(`http://149.125.108.134:8000/kill/${pid}`, {
+                method: "POST"
+            });
+
+            const data = await response.json();
+            console.log(data);
+        }
+        catch(error){
+            console.log("Failed to kill process", error);
+        }
+    };
+
     return (
     <SafeAreaView style={styles.container}>
         <View style={{height: '3%'}}></View>
@@ -64,7 +78,7 @@ export const ProcessDetails = ({route, navigation}) => {
         </View>
         <View style={styles.verticalSpacing}></View>
         <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => {killProcess(currProcess.pid); navigation.goBack()}}
             style={{backgroundColor: 'cyan', height: '5%', width: '95%', alignItems: 'center', justifyContent: 'center', borderRadius: 5, borderWidth: 2}}>
             <Text style={styles.bottomText}>Kill Process</Text>
         </TouchableOpacity>
