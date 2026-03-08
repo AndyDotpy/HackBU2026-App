@@ -31,7 +31,7 @@ export const ProcessDetails = ({route, navigation}) => {
 
     const killProcess = async (pid) => {
         try {
-            const response = await fetch(`http://149.125.108.134:8000/kill/${pid}`, {
+            const response = await fetch(`http://172.20.10.3:8000/kill/${pid}`, {
                 method: "POST"
             });
 

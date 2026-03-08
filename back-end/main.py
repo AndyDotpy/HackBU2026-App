@@ -18,6 +18,7 @@ def read_processes():
 @app.post("/kill/{pid}")
 def kill_process(pid: int):
     try:
+        print(pid)
         send_sig.send_signal(pid, "SIGTERM")
         return {"status": "success", "pid": pid}
 
