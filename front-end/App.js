@@ -6,7 +6,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import {NavigationContainer} from "@react-navigation/native";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {ProcessDetails} from "./ProcessDetails";
-import {scaleFontSize, width, formatBytes, formatUptime, height} from "./Utilities";
+import {scaleFontSize, width, formatBytes, formatUptime, getClosestProc} from "./Utilities";
 
 
 const Stack = createNativeStackNavigator();
@@ -28,34 +28,24 @@ const secondaryLine = (process, currentSort) => {
 }
 
 
-const ProcessDisplay = ({process, navigation, currentSort}) => (
-    <SafeAreaView style={{alignItems: "center", flex: 1}}>
-        <TouchableOpacity style={styles.processContainer} onPress={() => navigation.navigate("ProcessDetails", {process: process})}>
-            <Text style={styles.processText}>{process.name}</Text>
-            <Text style={styles.processText}>{secondaryLine(process, currentSort)}</Text>
-        </TouchableOpacity>
-        <View style={{height: '1%'}}></View>
-    </SafeAreaView>
-);
-
 
 function HomeScreen({navigation}) {
     const [dropDownOpen, setDropDownOpen] = useState(false);
     const [drownDownValue, setDrownDownValue] = useState("PID");
   const [processList, setProcessList] = useState([
-      new Process("Proc1", 1, 4902934, 234, 20, 1),
-      new Process("Proc2", 2, 49034, 23434, 30, 2),
-      new Process("Proc3", 3, 4034, 23, 20, 5),
-      new Process("Proc4", 4, 436, 232, 5, 2),
-      new Process("Proc5", 5, 4336, 123, 2, 5),
-      new Process("Proc6", 6, 4363546753546786867354, 4000, 4, 9,3),
-      new Process("EpicProc", 7, 8343, 290, 10, 1,2),
-      new Process("EpicProc2", 8, 2389, 3010, 2, 18.2),
+        new Process("Proc1", 1, 4902934, 234, 20, 1),
+        new Process("Proc2", 2, 49034, 23434, 30, 2),
+        new Process("Proc3", 3, 4034, 23, 20, 5),
+        new Process("Proc4", 4, 436, 232, 5, 2),
+        new Process("Proc5", 5, 4336, 123, 2, 5),
+        new Process("Proc6", 6, 4363546753546786867354, 4000, 4, 9,3),
+        new Process("EpicProc", 7, 8343, 290, 10, 1,2),
+        new Process("EpicProc2", 8, 2389, 3010, 2, 18.2),
   ])
     const [totalCPUUsage, setTotalCPUUsage] = useState(0.0);
     const [numProcesses, setNumProcesses] = useState(0);
     const [totalBytes, setTotalBytes] = useState(0);
-    const [acceptingData, setAcceptingData] = useState(true);
+    const [acceptingData, setAcceptingData] = useState(false);
     const [highUseProcs, setHighUseProcs] = useState(0);
     const [lowUseProcs, setLowUseProcs] = useState(0);
 
@@ -64,6 +54,7 @@ function HomeScreen({navigation}) {
         try{
             const response = await fetch("http://149.125.108.134:8000/processes");
             const data = await response.json();
+            console.log(data.message);
             const processArray = Object.entries(data.message).map(([pid, proc]) => new Process(
                 proc.name,
                 proc.pid,
@@ -84,34 +75,59 @@ function HomeScreen({navigation}) {
         setAcceptingData(toggled);
     }
 
-    const getClosestProc = (process, property) => {
-        if (processList.length === 0) {
-            return process;
-        }
+    const ProcessDisplay = ({process, navigation, currentSort}) => (
+        <SafeAreaView style={{alignItems: "center", flex: 1}}>
+            <TouchableOpacity style={styles.processContainer} onPress={() => navigation.navigate("ProcessDetails", {
+                process:  process,
+                closeCpu: getClosestProc(processList, process, "cpuUtilization"),
+                closePID: getClosestProc(processList, process, "pid"),
+                closeUptime: getClosestProc(processList, process, "uptime"),
+                closeMemory: getClosestProc(processList, process, "bytes"),
+                allProcesses: processList,
+            })}>
+                <Text style={styles.processText}>{process.name}</Text>
+                <Text style={styles.processText}>{secondaryLine(process, currentSort)}</Text>
+            </TouchableOpacity>
+            <View style={{height: '1%'}}></View>
+        </SafeAreaView>
+    );
 
-        let returnProc = processList[0];
-        let cpuDif = Math.abs(processList[0][property] - process[property]);
-        let currDif
-
-        // Continue here
-
-        for (let i = 1; i < processList.length; i++) {
-            currDif = processList[i].cpuUtilization - process.cpuUtilization;
-        }
-
-        return returnProc;
-    }
 
     useEffect(() =>{
         fetchProcess();
 
         const interval = setInterval(() => {
-            fetchProcess();
+            if (acceptingData) {
+                fetchProcess();
+                let cpuUsage = 0
+                let processes = 0
+                let totalBytes = 0
+                let highRescource = 0
+                let lowRescource = 0
+
+                for (const process of processList) {
+                    cpuUsage += process.cpuUtilization
+                    processes++
+                    totalBytes += process.bytes
+                    if (process.reasorceUtilizationLevel >= 0.5) {
+                        highRescource++
+                    } else if (process.reasorceUtilizationLevel <= 0.2) {
+                        lowRescource++
+                    }
+                }
+
+                console.log("Recieved Succesfully")
+                setHighUseProcs(highRescource)
+                setLowUseProcs(lowRescource)
+                setTotalBytes(totalBytes)
+                setNumProcesses(processes)
+                setTotalCPUUsage(cpuUsage)
+            }
         }, 3000);
 
         return () => clearInterval(interval);
 
-    }, [])
+    }, [acceptingData])
 
     useEffect(() => {
         let new_list = [...processList];

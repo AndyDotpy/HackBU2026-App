@@ -38,3 +38,25 @@ export const formatUptime = (uptime) => {
     returnStr += sec_str
     return returnStr
 }
+
+export const getClosestProc = (procList, process, property) => {
+    let currProcs = [...procList].filter(proc => proc !== process);
+
+    if (currProcs.length === 0) {
+        return process;
+    }
+
+    let returnProc = currProcs[0];
+    let cpuDif = Math.abs(currProcs[0][property] - process[property]);
+    let currDif
+
+    for (let i = 1; i < currProcs.length; i++) {
+        currDif = Math.abs(currProcs[i][property] - process[property]);
+        if (currDif < cpuDif) {
+            cpuDif = currDif;
+            returnProc = currProcs[i];
+        }
+    }
+
+    return returnProc;
+}
