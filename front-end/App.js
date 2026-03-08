@@ -59,6 +59,26 @@ function HomeScreen({navigation}) {
     const [highUseProcs, setHighUseProcs] = useState(0);
     const [lowUseProcs, setLowUseProcs] = useState(0);
 
+
+    const fetchProcess = async () => {
+        try{
+            const response = await fetch("http://149.125.108.134:8000/processes");
+            const data = await response.json();
+            const processArray = Object.entries(data.message).map(([pid, proc]) => new Process(
+                proc.name,
+                proc.pid,
+                proc.memory_info,
+                proc.uptime,
+                proc.cpu_percent,
+                proc.severity,
+                ));
+            setProcessList(processArray);
+        }
+        catch(error){
+            console.log("Failed to receive processes", error);
+        }
+    }
+
     const toggleAcceptingData = () => {
         let toggled = !acceptingData
         setAcceptingData(toggled);
@@ -82,7 +102,16 @@ function HomeScreen({navigation}) {
         return returnProc;
     }
 
+    useEffect(() =>{
+        fetchProcess();
 
+        const interval = setInterval(() => {
+            fetchProcess();
+        }, 3000);
+
+        return () => clearInterval(interval);
+
+    }, [])
 
     useEffect(() => {
         let new_list = [...processList];

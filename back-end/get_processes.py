@@ -14,6 +14,7 @@ def get_process_dict():
 
             # get bytes per second, used in severity_score()
             io = proc.io_counters()
+
             try:
                 bytes_per_second = (io.read_bytes + io.write_bytes) / uptime
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired, psutil.Error, ZeroDivisionError):
