@@ -6,17 +6,33 @@ import DropDownPicker from "react-native-dropdown-picker";
 import {NavigationContainer} from "@react-navigation/native";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {ProcessDetails} from "./ProcessDetails";
-import {scaleFontSize} from "./Utilities";
+import {scaleFontSize, width, formatBytes, formatUptime, height} from "./Utilities";
 
 
 const Stack = createNativeStackNavigator();
 
+const secondaryLine = (process, currentSort) => {
+    if (currentSort.includes("PID")) {
+        return "PID: " + process.pid
+    } else if (currentSort.includes("Uptime")) {
+        return "Uptime: " + formatUptime(process.uptime)
+    } else if (currentSort.includes("CPU")) {
+        return "CPU Utilization: " + process.cpuUtilization + "%"
+    } else if (currentSort.includes("Name")) {
+        return "Uptime: " + formatUptime(process.uptime)
+    } else if (currentSort.includes("Memory")) {
+        return formatBytes(process.bytes)
+    } else if (currentSort.includes("Score")) {
+        return "Resource Utilization Score: " + process.reasorceUtilizationLevel
+    }
+}
 
-const ProcessDisplay = ({process, navigation}) => (
+
+const ProcessDisplay = ({process, navigation, currentSort}) => (
     <SafeAreaView style={{alignItems: "center", flex: 1}}>
         <TouchableOpacity style={styles.processContainer} onPress={() => navigation.navigate("ProcessDetails", {process: process})}>
             <Text style={styles.processText}>{process.name}</Text>
-            <Text style={styles.processText}>{"PID: " + process.pid}</Text>
+            <Text style={styles.processText}>{secondaryLine(process, currentSort)}</Text>
         </TouchableOpacity>
         <View style={{height: '1%'}}></View>
     </SafeAreaView>
@@ -24,17 +40,47 @@ const ProcessDisplay = ({process, navigation}) => (
 
 
 function HomeScreen({navigation}) {
-  const [processList, setProcessList] = useState([
-      new Process("Proc1", 1, 4902934, 234, 20),
-      new Process("Proc2", 2, 49034, 23434, 30),
-      new Process("Proc3", 3, 4034, 23, 20),
-      new Process("Proc4", 4, 436, 232, 5),
-      new Process("Proc5", 5, 4336, 123, 2),
-      new Process("Proc6", 6, 4363546753546786867354, 4000, 4),
-  ])
-
     const [dropDownOpen, setDropDownOpen] = useState(false);
-    const [drownDownValue, setDrownDownValue] = useState(null);
+    const [drownDownValue, setDrownDownValue] = useState("PID");
+  const [processList, setProcessList] = useState([
+      new Process("Proc1", 1, 4902934, 234, 20, 1),
+      new Process("Proc2", 2, 49034, 23434, 30, 2),
+      new Process("Proc3", 3, 4034, 23, 20, 5),
+      new Process("Proc4", 4, 436, 232, 5, 2),
+      new Process("Proc5", 5, 4336, 123, 2, 5),
+      new Process("Proc6", 6, 4363546753546786867354, 4000, 4, 9,3),
+      new Process("EpicProc", 7, 8343, 290, 10, 1,2),
+      new Process("EpicProc2", 8, 2389, 3010, 2, 18.2),
+  ])
+    const [totalCPUUsage, setTotalCPUUsage] = useState(0.0);
+    const [numProcesses, setNumProcesses] = useState(0);
+    const [totalBytes, setTotalBytes] = useState(0);
+    const [acceptingData, setAcceptingData] = useState(true);
+    const [highUseProcs, setHighUseProcs] = useState(0);
+    const [lowUseProcs, setLowUseProcs] = useState(0);
+
+    const toggleAcceptingData = () => {
+        let toggled = !acceptingData
+        setAcceptingData(toggled);
+    }
+
+    const getClosestProc = (process, property) => {
+        if (processList.length === 0) {
+            return process;
+        }
+
+        let returnProc = processList[0];
+        let cpuDif = Math.abs(processList[0][property] - process[property]);
+        let currDif
+
+        // Continue here
+
+        for (let i = 1; i < processList.length; i++) {
+            currDif = processList[i].cpuUtilization - process.cpuUtilization;
+        }
+
+        return returnProc;
+    }
 
 
 
@@ -55,8 +101,16 @@ function HomeScreen({navigation}) {
             new_list.sort((a, b) => b.cpuUtilization - a.cpuUtilization);
         } else if (drownDownValue === "Process Name Ascending") {
             new_list.sort((a, b) => a.name.localeCompare(b.name));
-        } else {
+        } else if (drownDownValue === "Process Name Descending") {
             new_list.sort((a, b) => b.name.localeCompare(a.name));
+        } else if (drownDownValue === "Memory Ascending") {
+            new_list.sort((a, b) => a.bytes - b.bytes);
+        } else if (drownDownValue === "Memory Descending") {
+            new_list.sort((a, b) => b.bytes - a.bytes);
+        } else if (drownDownValue === "Resource Score Ascending") {
+            new_list.sort((a, b) => (a.reasorceUtilizationLevel > b.reasorceUtilizationLevel) - (b.reasorceUtilizationLevel - a.reasorceUtilizationLevel));
+        } else {
+            new_list.sort((a, b) => (b.reasorceUtilizationLevel > a.reasorceUtilizationLevel) - (a.reasorceUtilizationLevel - b.reasorceUtilizationLevel));
         }
 
         setProcessList(new_list);
@@ -66,10 +120,12 @@ function HomeScreen({navigation}) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
       <View style={{height: '5%'}}></View>
-        <View style={{alignItems: "center"}}>
+        <View style={{paddingLeft: width * .025, paddingRight: width * .025}}>
             <DropDownPicker
                 placeholder={"Choose Method To Sort Processes"}
-                style={{width: '90%'}}
+                searchPlaceholderTextColor={"teal"}
+                textStyle={{color: 'teal'}}
+                style={{}}
                 open={dropDownOpen}
                 value={drownDownValue}
                 items={[
@@ -81,20 +137,58 @@ function HomeScreen({navigation}) {
                     {label: "Process Name Descending", value: "Process Name Descending"},
                     {label: "CPU Utilization Ascending", value: "CPU Utilization Ascending"},
                     {label: "CPU Utilization Descending", value: "CPU Utilization Descending"},
+                    {label: "Memory Ascending", value: "Memory Ascending"},
+                    {label: "Memory Descending", value: "Memory Descending"},
+                    {label: "Resource Score Ascending", value: "Resource Score Ascending"},
+                    {label: "Resource Score Descending", value: "Resource Score Descending"},
                 ]}
                 setOpen={setDropDownOpen}
                 setValue={setDrownDownValue}
             />
         </View>
         <View style={{height: '1%'}}></View>
-        <View style={{height: '.4%', backgroundColor: "darkblue"}}></View>
+        <View style={{height: '.4%', backgroundColor: "darkgreen"}}></View>
         <View style={{height: '1%'}}></View>
       <FlatList
           data={processList}
-          renderItem={({item}) => <ProcessDisplay process={item} navigation={navigation}/>}
+          renderItem={({item}) => <ProcessDisplay process={item} navigation={navigation} currentSort={drownDownValue}/>}
           keyExtractor={process => String(process.uniqueId)}
           horizontal={false}
       />
+        <View style={{height: '1%'}}></View>
+        <View style={{height: '.4%', backgroundColor: "darkgreen"}}></View>
+        <View style={{height: '1%'}}></View>
+        <View style={{height: '30%'}}>
+            <View style={styles.verticalStyle}>
+                <View style={styles.horizontalStyle}>
+                    <Text style={styles.infoText}>{"CPU Usage: " + totalCPUUsage + "%"}</Text>
+                </View>
+                <View style={styles.horizontalSpacing}/>
+                <View style={styles.horizontalStyle}>
+                    <Text style={styles.infoText}>{numProcesses + " Processes"}</Text>
+                </View>
+            </View>
+            <View style={styles.verticalSpacing}/>
+            <View style={styles.verticalStyle}>
+                <View style={styles.horizontalStyle}>
+                    <Text style={styles.infoText}>{formatBytes(totalBytes) + " For All Processes"}</Text>
+                </View>
+                <View style={styles.horizontalSpacing}/>
+                <View style={styles.horizontalStyle}>
+                    <Text style={styles.infoText}>{highUseProcs + " High Resource Use Processes"}</Text>
+                </View>
+            </View>
+            <View style={styles.verticalSpacing}/>
+            <View style={styles.verticalStyle}>
+                <View style={styles.horizontalStyle}>
+                    <Text style={styles.infoText}>{lowUseProcs + " Low Resource Use Processes"}</Text>
+                </View>
+                <View style={styles.horizontalSpacing}/>
+                <TouchableOpacity style={[styles.horizontalStyle, {backgroundColor: (acceptingData) ? "darkgreen" : "darkred"}]} onPress={() => toggleAcceptingData()}>
+                    <Text style={styles.infoText}>{((acceptingData) ? "" : "Not ") + "Accepting Process Info"}</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
       <View style={{height: '2%'}}></View>
     </SafeAreaView>
   );
@@ -116,22 +210,49 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'lightgrey',
     //alignItems: 'center',
     justifyContent: 'center',
     //width: '100%',
   },
     processContainer: {
-        //flex: 1,
         backgroundColor: 'teal',
-        //alignItems: 'center',
-        //justifyContent: 'center',
-        width: '90%',
+        width: '95%',
         borderRadius: 5,
         marginBottom: 5,
+        borderWidth: 2,
+
     },
     processText: {
         fontSize: scaleFontSize(12),
-        color: "black",
+        color: "lightblue",
+    },
+    verticalStyle: {
+      flexDirection: 'row',
+        width: '95%',
+        height: '31%',
+        alignSelf: 'center',
+    },
+    verticalSpacing: {
+      height: '2%'
+    },
+    horizontalStyle: {
+      width: '49.5%',
+        height: '100%',
+        borderColor: 'black',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        backgroundColor: 'darkgreen',
+        borderRadius: 5,
+        borderWidth: 2,
+    },
+    horizontalSpacing: {
+      width: '1%'
+    },
+    infoText: {
+        fontSize: scaleFontSize(9),
+        color: 'lightgreen',
+        textAlign: 'center',
     }
 });

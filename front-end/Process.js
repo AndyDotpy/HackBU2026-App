@@ -3,12 +3,14 @@ import {scaleFontSize} from "./Utilities";
 
 let counter = 0
 export class Process {
-    constructor(name, pid, bytes, uptime, cpuUtilization) {
+    constructor(name, pid, bytes, uptime, cpuUtilization, rulScore) {
         this.name = name;
         this.pid = pid
         this.bytes = bytes
         this.uptime = uptime
         this.cpuUtilization = cpuUtilization
+        this.timeStamp = Date(Date.now()).toLocaleString()
+        this.reasorceUtilizationLevel = rulScore
         this.uniqueId = counter++
     }
 }
