@@ -1,24 +1,25 @@
 import os
 import signal
 
-def end_process(pid, sig):
+signal_dict = {
+    'SIGTERM': signal.SIGTERM,
+    'SIGINT': signal.SIGINT,
+}
+
+def send_signal(pid, sig):
     try:
-        match sig:
-            case "SIGTERM":
-                os.kill(pid, signal.SIGTERM)
-            case "SIGKILL":
-                os.kill(pid, signal.SIGKILL)
-            case _:
-                print("Error: Invalid signal")
-                return False
+        os.kill(pid, signal_dict[sig])
+    except KeyError:
+        print("Error: invalid signal")
+        return False
     except OSError:
-        print("Error: pid not found")
+        print("Error: pid does not exist")
         return False
     else:
         return True
 '''
 Description:
-    Either kills or terminates a process given a process ID and signal
+    Sends a signal to an OS given a process ID and signal. Currently supports SIGTERM, SIGINT.
 Args:
     pid (int): the process ID
     sig (string): the signal
@@ -27,4 +28,4 @@ Return:
     False for failure
 '''
 
-end_process(320948329, "SIG")
+# send_signal(27656, "SIGTERM")
